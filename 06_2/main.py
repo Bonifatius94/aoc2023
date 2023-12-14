@@ -1,5 +1,4 @@
 from typing import List
-from functools import reduce
 
 
 def read_lines() -> List[str]:
@@ -20,10 +19,9 @@ def options_count(time: int, distance: int) -> int:
 
 def main():
     lines = read_lines()
-    times = [int(t.strip()) for t in lines[0].split(":")[1].strip().split(" ") if t != ""]
-    distances = [int(d.strip()) for d in lines[1].split(":")[1].strip().split(" ") if d != ""]
-    counts = [options_count(t, d) for t, d in zip(times, distances)]
-    print("option products are", reduce(lambda x, y: x * y, counts))
+    time = int(lines[0].split(":")[1].replace(" ", ""))
+    distance = int(lines[1].split(":")[1].replace(" ", ""))
+    print("options count is", options_count(time, distance))
 
 
 if __name__ == "__main__":
