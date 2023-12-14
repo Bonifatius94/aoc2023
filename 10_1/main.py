@@ -62,7 +62,7 @@ def find_distance(map_data: List[str]):
     ))
     assert map_data[start_pos[1]][start_pos[0]] == "S"
 
-    direction = find_initial_dirs(map_data, start_pos)
+    direction = find_initial_dirs(map_data, start_pos)[0]
     pos = move(start_pos, direction)
 
     steps = 1
