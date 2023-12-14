@@ -1,8 +1,8 @@
-from typing import List
+from typing import List, Optional
 from functools import cmp_to_key
 
 
-CARDS = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+CARDS = ["J", "2", "3", "4", "5", "6", "7", "8", "9", "T", "Q", "K", "A"]
 
 
 def read_lines() -> List[str]:
@@ -12,22 +12,40 @@ def read_lines() -> List[str]:
     return lines
 
 
+def joker_count(hand: str) -> int:
+    return sum([1 for c in hand if c == "J"])
+
+
 def card_count(hand: str, card: str) -> int:
     return sum([1 for c in hand if c == card])
 
 
-def is_set_of(hand: str, count: int) -> bool:
-    return any([card_count(hand, c) == count for c in CARDS])
+def is_set_of(hand: str, count: int) -> Optional[str]:
+    return next(iter(([c for c in CARDS[1:] if card_count(hand, c) + joker_count(hand) == count])), None)
 
 
 def is_full_house(hand: str) -> bool:
-    c3 = next(iter([c for c in CARDS if card_count(hand, c) == 3]))
-    h = hand.replace(c3, "")
-    return h[0] == h[1]
+    jokers = joker_count(hand)
+    if jokers >= 3:
+        return True
+    elif jokers == 2:
+        return any([c for c in CARDS[1:] if card_count(hand, c) == 2])
+    elif jokers == 1:
+        return len([c for c in CARDS[1:] if card_count(hand, c) == 2]) == 2
+    else: # jokers == 0
+        c3 = next(iter([c for c in CARDS if card_count(hand, c) == 3]))
+        h = hand.replace(c3, "")
+        return h[0] == h[1]
 
 
 def is_two_pair(hand: str) -> bool:
-    return len([c for c in CARDS if card_count(hand, c) == 2]) == 2
+    jokers = joker_count(hand)
+    if jokers >= 2:
+        return True
+    elif jokers == 1:
+        return any([c for c in CARDS[1:] if card_count(hand, c) == 2])
+    else: # jokers == 0
+        return len([c for c in CARDS[1:] if card_count(hand, c) == 2]) == 2
 
 
 def hand_score(hand: str) -> int:
