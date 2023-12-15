@@ -1,5 +1,4 @@
 from typing import List, Tuple
-from shapely.geometry import Polygon
 
 
 NORTH, SOUTH, EAST, WEST = "N", "S", "E", "W"
@@ -78,7 +77,13 @@ def all_tiles(map_data: List[str]) -> List[Tuple[str, Tuple[int, int]]]:
     return res
 
 
-def poly_area(tiles: List[Tuple[str, Tuple[int, int]]]) -> int:
+def poly_area(vertices: List[Tuple[float, float]]) -> float:
+    segments = list(zip(vertices, vertices[1:] + [vertices[0]]))
+    return 0.5 * abs(sum([x0*y1 - x1*y0 for ((x0, y0), (x1, y1)) in segments]))
+
+
+def tile_outlines(tiles: List[Tuple[str, Tuple[int, int]]]) \
+        -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]]]:
 
     def dir_of(tile: str, is_horizontal: bool) -> str:
         if tile == NE:
@@ -129,15 +134,15 @@ def poly_area(tiles: List[Tuple[str, Tuple[int, int]]]) -> int:
             right_outline.append(e1 if direction == SOUTH else e2)
             left_outline.append(e2 if direction == SOUTH else e1)
 
-    # TODO: implement own polygon area calculation
-    p1, p2 = Polygon(right_outline), Polygon(left_outline)
-    return int(min(p1.area, p2.area))
+    return right_outline, left_outline
 
 
 def main():
     map_data = [l for l in read_lines() if l != ""]
     tiles = all_tiles(map_data)
-    print("area is", poly_area(tiles))
+    right_outline, left_outline = tile_outlines(tiles)
+    area = int(min(poly_area(right_outline), poly_area(left_outline)))
+    print("area is", area)
 
 
 if __name__ == "__main__":
