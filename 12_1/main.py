@@ -39,25 +39,41 @@ def is_possible_arrangement(pattern: str, backup_log: List[int]) -> bool:
 
 def permute_no_duplicates(
         pattern: List[str], wildcard_pos: List[int],
-        offset: int=0) -> List[str]:
+        num_damaged_wildcards: int, offset: int=0) -> List[str]:
 
-    if offset == len(wildcard_pos) - 1:
-        for s in [OPERATIONAL, DAMAGED]:
-            pattern[wildcard_pos[offset]] = s
-            yield pattern
-    else:
-        for s in [OPERATIONAL, DAMAGED]:
-            pattern[wildcard_pos[offset]] = s
-            for p in permute_no_duplicates(pattern, wildcard_pos, offset+1):
-                yield p
+    remaining_wildcards = len(wildcard_pos) - offset
+    if num_damaged_wildcards == 0:
+        for pos in wildcard_pos[offset:]:
+            pattern[pos] = OPERATIONAL
+        yield pattern
+    elif remaining_wildcards == num_damaged_wildcards:
+        for pos in wildcard_pos[offset:]:
+            pattern[pos] = DAMAGED
+        yield pattern
+    elif remaining_wildcards > num_damaged_wildcards:
+        if offset == len(wildcard_pos) - 1:
+            for s in [OPERATIONAL, DAMAGED]:
+                pattern[wildcard_pos[offset]] = s
+                yield pattern
+        else:
+            for s in [OPERATIONAL, DAMAGED]:
+                pattern[wildcard_pos[offset]] = s
+                remaining_damaged = num_damaged_wildcards - (1 if s == DAMAGED else 0)
+                perms = permute_no_duplicates(
+                    pattern, wildcard_pos, remaining_damaged, offset+1)
+                for p in perms:
+                    yield p
 
 
 def possible_arrangements(pattern: str, backup_log: List[int]) -> int:
     pattern = [s for s in pattern]
     wildcard_pos = [i for i, s in enumerate(pattern) if s == WILDCARD]
+    num_det_damaged = sum([1 for s in pattern if s == DAMAGED])
+    num_damaged_wildcards = sum(backup_log) - num_det_damaged
 
     count = 0
-    for pattern_to_test in permute_no_duplicates(pattern, wildcard_pos):
+    for pattern_to_test in permute_no_duplicates(
+            pattern, wildcard_pos, num_damaged_wildcards):
         if is_possible_arrangement(pattern_to_test, backup_log):
             count += 1
 
