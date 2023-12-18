@@ -29,7 +29,7 @@ def follow_beam(
         map_data: List[List[str]],
         pos: Tuple[int, int],
         direction: str,
-        splitters: List[Tuple[str, int, int]]) -> List[Tuple[int, int]]:
+        visited_splitters: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
     width, height = len(map_data[0]), len(map_data)
     while 0 <= pos[0] < width and 0 <= pos[1] < height:
         x, y = pos
@@ -44,27 +44,21 @@ def follow_beam(
             direction = mapping[direction]
             pos = move(pos, direction)
         else: # tile in ["|", "-"]:
-            if (tile, x, y) in splitters:
+            if (x, y) in visited_splitters:
                 return
-            splitters.append((tile, x, y))
+            visited_splitters.append((x, y))
             ortho_dirs = [S, N] if tile == "|" else [E, W]
-            beam1 = iter(follow_beam(map_data, pos, ortho_dirs[0], splitters))
-            beam2 = iter(follow_beam(map_data, pos, ortho_dirs[1], splitters))
-            while True:
-                p1, p2 = next(beam1, None), next(beam2, None)
-                if p1:
-                    yield p1
-                if p2:
-                    yield p2
-                if not p1 and not p2:
-                    return
+            for d in ortho_dirs:
+                for p in follow_beam(map_data, pos, d, visited_splitters):
+                    yield p
+            return
 
 
 def main():
     lines = read_lines()
     map_data = [[c for c in line] for line in lines if line != ""]
-    energized_tiles = set(follow_beam(map_data, (0, 0), E, []))
-    print("energized tiles", len(energized_tiles))
+    energized_pos = set(follow_beam(map_data, (0, 0), E, []))
+    print("energized tiles", len(energized_pos))
 
 
 if __name__ == "__main__":
