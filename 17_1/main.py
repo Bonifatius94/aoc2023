@@ -65,7 +65,8 @@ def build_graph(heat_loss_map: List[List[int]]) -> List[Edge]:
 
 
 def neighbors_of_graph(graph: List[Edge]) -> Tuple[Neighbors, Neighbors]:
-    incoming, outgoing = dict(), dict()
+    incoming: Neighbors = dict()
+    outgoing: Neighbors = dict()
     for n1, n2, d in graph:
         if n1 in outgoing:
             outgoing[n1].append((n2, d))
@@ -97,7 +98,7 @@ def optimal_path(
     while nodes_to_visit:
         prio, node_id = nodes_to_visit.pop()
         visited.add(node_id)
-        print(f"\rvisiting {node_id} with prio {prio}, progress: {len(visited)} / {len(outgoing)}         ", end="")
+        print(f"\rvisiting {node_id} with prio {prio}, progress: {len(visited)} / {len(all_nodes)}         ", end="")
         adj_nodes = [(ids_by_node[n2], d) for n2, d in outgoing[nodes_by_id[node_id]]] \
             if nodes_by_id[node_id] in outgoing else []
         for adj_node, distance in adj_nodes:
