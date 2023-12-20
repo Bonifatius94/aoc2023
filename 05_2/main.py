@@ -55,16 +55,12 @@ def map_range(
                 res.append((lower_bound, length))
                 length = 0
 
-    if sum([l for _, l in res]) != range_to_map[1]:
-        print(range_to_map, res)
-
     return res
 
 
 def maps_to(
         ranges: List[Tuple[int, int]],
         mappings: List[Tuple[int, int, int]]) -> List[Tuple[int, int]]:
-    print("new mapping")
     return [res for r in ranges for res in map_range(r, mappings)]
 
 
