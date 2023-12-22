@@ -2,11 +2,6 @@ from typing import List
 from tqdm import tqdm
 
 
-DAMAGED = "#"
-OPERATIONAL = "."
-WILDCARD = "?"
-
-
 def read_lines() -> List[str]:
     with open("data.txt", "r") as f:
         lines = f.readlines()
@@ -14,74 +9,47 @@ def read_lines() -> List[str]:
     return lines
 
 
-def is_possible_arrangement(pattern: str, backup_log: List[int]) -> bool:
-    # TODO: reimplement this with bitwise ops
-    offset = 0
-    for count in backup_log:
-        while offset < len(pattern) and pattern[offset] == OPERATIONAL:
-            offset += 1
-
-        if offset < len(pattern) and len(pattern[offset:]) < count:
-            return False
-
-        if not all([s == DAMAGED for s in pattern[offset:offset+count]]):
-            return False
-
-        offset += count
-        if not (offset >= len(pattern) or pattern[offset] == OPERATIONAL):
-            return False
-
-    while offset < len(pattern) and pattern[offset] == OPERATIONAL:
-        offset += 1
-
-    return offset == len(pattern)
+def can_fit_damaged_sequence(pattern: str, num_damaged: int) -> bool:
+    return len(pattern) >= num_damaged \
+        and all([c in ["#", "?"] for c in pattern[:num_damaged]]) \
+        and (len(pattern) == num_damaged or pattern[num_damaged] in [".", "?"])
 
 
-def permute_no_duplicates(
-        pattern: List[str], wildcard_pos: List[int],
-        num_damaged_wildcards: int, offset: int=0) -> List[str]:
+def potential_damanged_count(pattern: str) -> int:
+    return sum([1 for c in pattern if c in ["#", "?"]])
 
-    remaining_wildcards = len(wildcard_pos) - offset
-    if num_damaged_wildcards == 0:
-        for pos in wildcard_pos[offset:]:
-            pattern[pos] = OPERATIONAL
-        yield pattern
-    elif remaining_wildcards == num_damaged_wildcards:
-        for pos in wildcard_pos[offset:]:
-            pattern[pos] = DAMAGED
-        yield pattern
-    elif remaining_wildcards > num_damaged_wildcards:
-        if offset == len(wildcard_pos) - 1:
-            for s in [OPERATIONAL, DAMAGED]:
-                pattern[wildcard_pos[offset]] = s
-                yield pattern
+
+def possible_arrangements(pattern: str, backup: List[int]) -> int:
+    if len(backup) == 0:
+        return 0 if "#" in pattern else 1
+    if len(pattern) == 0:
+        return 0
+    if potential_damanged_count(pattern) < sum(backup):
+        return 0
+
+    first_damaged = pattern.index("#") if "#" in pattern else len(pattern)
+    first_lossy = pattern.index("?") if "?" in pattern else len(pattern)
+    if first_damaged < first_lossy:
+        offset = first_damaged
+        if can_fit_damaged_sequence(pattern[offset:], backup[0]):
+            return possible_arrangements(pattern[offset+backup[0]+1:], backup[1:])
         else:
-            for s in [OPERATIONAL, DAMAGED]:
-                pattern[wildcard_pos[offset]] = s
-                remaining_damaged = num_damaged_wildcards - (1 if s == DAMAGED else 0)
-                perms = permute_no_duplicates(
-                    pattern, wildcard_pos, remaining_damaged, offset+1)
-                for p in perms:
-                    yield p
-
-
-def possible_arrangements(pattern: str, backup_log: List[int]) -> int:
-    pattern = [s for s in pattern]
-    wildcard_pos = [i for i, s in enumerate(pattern) if s == WILDCARD]
-    num_det_damaged = sum([1 for s in pattern if s == DAMAGED])
-    num_damaged_wildcards = sum(backup_log) - num_det_damaged
-
-    count = 0
-    for pattern_to_test in permute_no_duplicates(
-            pattern, wildcard_pos, num_damaged_wildcards):
-        if is_possible_arrangement(pattern_to_test, backup_log):
-            count += 1
-
-    return count
+            return 0
+    else:
+        offset = first_lossy
+        if can_fit_damaged_sequence(pattern[offset:], backup[0]):
+            if can_fit_damaged_sequence(pattern[offset+1:], backup[0]):
+                count_no_dmg = possible_arrangements(pattern[offset+1:], backup)
+                count_dmg = possible_arrangements(pattern[offset+backup[0]+1:], backup[1:])
+                return count_no_dmg + count_dmg
+            else:
+                return possible_arrangements(pattern[offset+backup[0]+1:], backup[1:])
+        else:
+            return possible_arrangements(pattern[offset+1:], backup)
 
 
 def main():
-    # lines = read_lines()
+    lines = read_lines()
     lines = [
         "???.### 1,1,3",
         ".??..??...?##. 1,1,3",
@@ -95,10 +63,8 @@ def main():
         for l in lines if l != ""
     ]
     spring_records = [("?".join([p for _ in range(5)]), b * 5) for p, b in spring_records]
-    # print(spring_records[0])
-    # print(max([sum([1 for s in p if s == WILDCARD]) for p, b in spring_records]))
 
-    poss_arr = [possible_arrangements(p, b) for p, b in tqdm(spring_records)]
+    poss_arr = [possible_arrangements(p, b) for p, b in spring_records]
     print("sum of possible arrangements", sum(poss_arr))
 
 
